@@ -1,7 +1,7 @@
 import chromadb
 from chromadb import Collection
 from chromadb import QueryResult
-from snpedia import SNPedia
+from genome_rag.snpedia.snpedia import SNPedia
 from tqdm import tqdm # Import tqdm
 
 
