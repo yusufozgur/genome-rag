@@ -32,5 +32,6 @@ class VectorDB:
             page = wiki.get_page_text(id)
             self.pages.add(
                 ids=[id],
-                documents=[page.content]
+                documents=[page.content],
+                metadatas=[(page.metadata)] # type: ignore
             )
