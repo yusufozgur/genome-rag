@@ -7,21 +7,44 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-    import sys
-    sys.path.append("genome_rag/snpedia/")
-    import snpedia
-    return (snpedia,)
+    from genome_rag.snpedia.snpedia import SNPedia
+    return (SNPedia,)
 
 
 @app.cell
-def _(snpedia):
-    page = snpedia.SNPedia().site.pages["rs5376"]
-    return (page,)
+def _(SNPedia):
+    snp = SNPedia()
+    return (snp,)
 
 
 @app.cell
-def _(page):
-    page.info
+def _(snp):
+    snp.get_page_text("Rs53576").metadata
+    return
+
+
+@app.cell
+def _(snp):
+    gt = "Rs53576"+snp.get_page_text("Rs53576").metadata["geno1"]
+    gt
+    return (gt,)
+
+
+@app.cell
+def _():
+
+    import mwclient
+    from mwclient.page import Page
+    import mwparserfromhell
+    return (mwclient,)
+
+
+@app.cell
+def _(gt, mwclient):
+
+    agent = 'MySNPBot using mwclient'
+    site = mwclient.Site('bots.snpedia.com', path='/', clients_useragent=agent, scheme='https')
+    site.pages[gt].text()
     return
 
 

@@ -18,7 +18,11 @@ model SnpediaPage {
   orientation           String
   stabilizedOrientation String
   geno1                 String
+  geno1_summary         String
   geno2                 String
+  geno2_summary         String
   geno3                 String
-  content               String // Page text stripped from code
+  geno3_summary         String
+  text                  String // Page text stripped from code
+  raw_content           String
 }

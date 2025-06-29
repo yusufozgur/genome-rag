@@ -16,7 +16,7 @@ st.title("🧬 Communicate with your genome.")
 
 # Replace st.file_uploader with st.text_input
 # uploaded_file = st.file_uploader("Upload a vcf file.", type=("vcf", ".vcf.gz"))
-file_path = st.text_input("Enter the path to your vcf file.", value="data/sample.tsv")
+file_path = st.text_input("Enter the path to your vcf file.", value="data/sample_8k.tsv")
 
 sample_name = st.text_input("Enter sample name", value="NA00003.GT")
 
@@ -57,7 +57,7 @@ if file_exists and question and gemini_api_key:
         snps = gt.get_snp_ids()
         db.add_snps_to_db_if_not_added(snps)
         gts = gt.get_individual_genotypes(sample_name)
-    llm = LLM(db, gemini_api_key, snps, top_n_results)
+    llm = LLM(db, gemini_api_key, snps, gts, top_n_results)
     with st.spinner("Processing...", show_time=True):
         response, context = llm.send_message(question)
         st.write(context)

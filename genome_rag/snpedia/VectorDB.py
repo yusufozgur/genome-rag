@@ -72,12 +72,18 @@ class VectorDB:
             page = wiki.get_page_text(id)
             print(id)
 
-            # if it is an empty page, dont even add it to the vector db
-            if page.content != "":
+            # We dont need to add full text and text of page to vectordb
+            # metadata, as it will be used in model context construction
+            # instead we will keep it in our sqlite db for future reference.
+            vectorbd_metadata = page.metadata.copy()
+            vectorbd_metadata.pop("text", None)
+            vectorbd_metadata.pop("raw_content", None)
+
+            if page.text != "":
                 self.vectors.add(
                     ids=[id],
-                    documents=[page.content],
-                    metadatas=[(page.metadata)] # type: ignore
+                    documents=[page.text], # Use page.text
+                    metadatas=[vectorbd_metadata] # type: ignore
                 )
             
             db.snpediapage.create(
@@ -88,9 +94,13 @@ class VectorDB:
                     "orientation": page.metadata.get("Orientation", ""),
                     "stabilizedOrientation": page.metadata.get("StabilizedOrientation", ""),
                     "geno1": page.metadata.get("geno1", ""),
+                    "geno1_summary": page.metadata.get("geno1_summary", ""), # Add new field
                     "geno2": page.metadata.get("geno2", ""),
+                    "geno2_summary": page.metadata.get("geno2_summary", ""), # Add new field
                     "geno3": page.metadata.get("geno3", ""),
-                    "content": page.content,
+                    "geno3_summary": page.metadata.get("geno3_summary", ""), # Add new field
+                    "text": page.text, # Use page.text for the text field
+                    "raw_content": page.metadata.get("raw_content", ""), # Add new field
                 }
             )
         
