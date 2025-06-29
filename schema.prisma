@@ -1,0 +1,24 @@
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "sync"
+  recursive_type_depth = 5
+}
+
+datasource db {
+  // could be postgresql or mysql
+  provider = "sqlite"
+  url      = "file:data/snpedia.sqlite"
+}
+
+model SnpediaPage {
+  id                    Int     @id @default(autoincrement())
+  variant_id            String  @unique
+  summary               String
+  assembly              String
+  orientation           String
+  stabilizedOrientation String
+  geno1                 String
+  geno2                 String
+  geno3                 String
+  content               String // Page text stripped from code
+}

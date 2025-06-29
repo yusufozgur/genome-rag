@@ -52,9 +52,6 @@ class SNPedia():
         content = wikicode.strip_code()
 
         # get metadata
-        metadata_fields = [
-        ]
-
         metadata_dict: Metadata = {
             "Summary": self._try_get_from_template_or_return_empty_str(wikicode, "Summary"),
             "Assembly": self._try_get_from_template_or_return_empty_str(wikicode, "Assembly"),

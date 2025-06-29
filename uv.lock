@@ -309,6 +309,7 @@ dependencies = [
     { name = "mwclient" },
     { name = "mwparserfromhell" },
     { name = "polars" },
+    { name = "prisma" },
     { name = "streamlit" },
 ]
 
@@ -324,6 +325,7 @@ requires-dist = [
     { name = "mwclient", specifier = ">=0.11.0" },
     { name = "mwparserfromhell", specifier = ">=0.7.0" },
     { name = "polars", specifier = ">=1.31.0" },
+    { name = "prisma", specifier = ">=0.15.0" },
     { name = "streamlit", specifier = ">=1.46.1" },
 ]
 
@@ -813,6 +815,15 @@ wheels = [
 ]
 
 [[package]]
+name = "nodeenv"
+version = "1.9.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/43/16/fc88b08840de0e0a72a2f9d8c6bae36be573e475a6326ae854bcc549fc45/nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f", size = 47437, upload-time = "2024-06-04T18:44:11.171Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/1d/1b658dbd2b9fa9c4c9f32accbfc0205d532c8c6194dc0f2a4c0428e7128a/nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9", size = 22314, upload-time = "2024-06-04T18:44:08.352Z" },
+]
+
+[[package]]
 name = "numpy"
 version = "2.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1090,6 +1101,25 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f3/c3/c83883af8cc5e3b45d1bee85edce546a4db369fb8dc8eb6339fad764178b/posthog-6.0.0.tar.gz", hash = "sha256:b7bfa0da03bd9240891885d3e44b747e62192ac9ee6da280f45320f4ad3479e0", size = 88066, upload-time = "2025-06-27T11:57:25.576Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ab/ec/7a44533c9fe7046ffcfe48ca0e7472ada2633854f474be633f4afed7b044/posthog-6.0.0-py3-none-any.whl", hash = "sha256:01f5d11046a6267d4384f552e819f0f4a7dc885eb19f606c36d44d662df9ff89", size = 104945, upload-time = "2025-06-27T11:57:24.152Z" },
+]
+
+[[package]]
+name = "prisma"
+version = "0.15.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "nodeenv" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "tomlkit" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4d/55/d4e07cbf40d5f1ab6d1c42c23613d442bf0d06abf7f70bec280aefb28249/prisma-0.15.0.tar.gz", hash = "sha256:5cd6402aa8322625db3fc1152040404e7fc471fe7f8fa3a314fa8a99529ca107", size = 154975, upload-time = "2024-08-16T02:54:03.919Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/62/6d/84533aa3fcc395235d58c3412fb86013653b697d91fc53f379c83bbb0b79/prisma-0.15.0-py3-none-any.whl", hash = "sha256:de949cc94d3d91243615f22ff64490aa6e2d7cb81aabffce53d92bd3977c09a4", size = 173809, upload-time = "2024-08-16T02:54:02.326Z" },
 ]
 
 [[package]]

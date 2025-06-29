@@ -6,55 +6,98 @@ from genome_rag.snpedia.snpedia import SNPedia
 from tqdm import tqdm # Import tqdm
 from genome_rag.genotypes.Genotype import VariantId
 
-
+from prisma import Prisma
 
 class VectorDB:
     """
     Acts as a vector storage for snpedia rsid variant pages.
     """
 
-    pages: Collection
+    #vectors for snpedia pages
+    vectors: Collection
 
     def __init__(self):
         chroma_client = chromadb.PersistentClient(path="data/chroma")
-        self.pages = chroma_client.get_or_create_collection(name="snpedia")
+        self.vectors = chroma_client.get_or_create_collection(name="snpedia")
 
     def add_snps_to_db_if_not_added(self, variant_ids: list[str]):
-        # Process variant_ids in slices of 100
-        slice_size = 100
+        """
+        Get a list of variant ids. If those variant ids are not already added to db, add them.
+        There is two dbs, one for snpedia scraped cache. One for vector storage and search.
+        """
+
+        db = Prisma()
+        db.connect()
+
+        # Process variant_ids in slices due to computational constraints
+        slice_size = 1000
         non_existent_ids = set()
         print(f"VectorDB: Checking for existing variants in batches of {slice_size}.")
 
         for i in tqdm(range(0, len(variant_ids), slice_size), desc="Checking existing SNPedia pages"):
-            current_slice = variant_ids[i:i + slice_size]
-            existing_pages = self.pages.get(ids=current_slice)
-            existing_ids = set(existing_pages["ids"])
-            non_existent_ids.update(set(current_slice) - existing_ids)
+            
+            var_ids_current_slice = variant_ids[i:i + slice_size]
+
+            existing_variants = db.snpediapage.find_many(
+                where={
+                    "variant_id": {
+                        "in": var_ids_current_slice
+                    }
+                }
+            )
+
+            existing_var_ids = [x.variant_id for x in existing_variants]
+
+            non_existent_ids.update(set(var_ids_current_slice) - set(existing_var_ids))
+
+        db.disconnect()
 
         if non_existent_ids:
-            print(f"VectorDB: Adding these new variants: {list(non_existent_ids)}.")
-            self._add_new_pages_to_db(non_existent_ids)
+            print(f"VectorDB: Adding {len(non_existent_ids)} new variants.")
+            self._add_new_pages_to_db(list(non_existent_ids))
         else:
             print(f"VectorDB: All required variants exist in DB.")
 
 
-    def _add_new_pages_to_db(self, variant_ids: set[str]):
+
+
+    def _add_new_pages_to_db(self, variant_ids: list[str]):
         wiki = SNPedia()
-        # Wrap the loop with tqdm for a progress bar
-        # Process adding in batches as well, although get_page_text is one by one
-        slice_size = 100
-        variant_ids_list = list(variant_ids) # Convert set to list for slicing
-        for i, id in tqdm(enumerate(variant_ids_list), desc="Adding new SNPedia pages"):
+        db = Prisma()
+        db.connect()
+
+        for i in tqdm(range(0, len(variant_ids)), desc="Adding new SNPedia pages"):
+            id = variant_ids[i]
             # Fetch and add pages for the current id
             page = wiki.get_page_text(id)
-            self.pages.add(
-                ids=[id],
-                documents=[page.content],
-                metadatas=[(page.metadata)] # type: ignore
+            print(id)
+
+            # if it is an empty page, dont even add it to the vector db
+            if page.content != "":
+                self.vectors.add(
+                    ids=[id],
+                    documents=[page.content],
+                    metadatas=[(page.metadata)] # type: ignore
+                )
+            
+            db.snpediapage.create(
+                data={
+                    "variant_id": id,
+                    "summary": page.metadata.get("Summary", ""), # Use .get for safety
+                    "assembly": page.metadata.get("Assembly", ""),
+                    "orientation": page.metadata.get("Orientation", ""),
+                    "stabilizedOrientation": page.metadata.get("StabilizedOrientation", ""),
+                    "geno1": page.metadata.get("geno1", ""),
+                    "geno2": page.metadata.get("geno2", ""),
+                    "geno3": page.metadata.get("geno3", ""),
+                    "content": page.content,
+                }
             )
+        
+        db.disconnect()
 
     def query(self, query: str, top_n: int = 10, ids = None) -> QueryResult:
-        return self.pages.query(
+        return self.vectors.query(
             query_texts=[query],
             n_results=top_n,
             ids = ids,

@@ -27,6 +27,15 @@ file_exists = os.path.exists(file_path)
 if not file_exists and file_path:
     st.error(f"Error: File not found at path: {file_path}")
 
+# Add a number input for top_n results
+top_n_results = st.number_input(
+    "Number of top results to consider",
+    min_value=1,
+    value=10,
+    step=1,
+    disabled=not file_exists or not file_path,
+)
+
 
 question = st.text_input(
     "Ask something about your genome",
@@ -34,6 +43,7 @@ question = st.text_input(
     # Disable if file doesn't exist or path is empty
     disabled=not file_exists or not file_path,
 )
+
 
 # Update conditions to use file_exists instead of uploaded_file
 if not gemini_api_key:
@@ -47,7 +57,7 @@ if file_exists and question and gemini_api_key:
         snps = gt.get_snp_ids()
         db.add_snps_to_db_if_not_added(snps)
         gts = gt.get_individual_genotypes(sample_name)
-    llm = LLM(db, api_key, snps)
+    llm = LLM(db, gemini_api_key, snps, top_n_results)
     with st.spinner("Processing...", show_time=True):
         response, context = llm.send_message(question)
         st.write(context)
