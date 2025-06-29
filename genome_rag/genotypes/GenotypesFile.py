@@ -1,5 +1,5 @@
 import polars as pl
-from Genotype import VariantId, Genotype
+from genome_rag.genotypes.Genotype import Genotype
 
 class GenotypesFile:
     """
@@ -10,12 +10,12 @@ class GenotypesFile:
     def __init__(self, filepath: str):
         self.lazyframe = pl.scan_csv(filepath, separator='\t')
 
-    def get_snp_ids(self) -> list[VariantId]:
+    def get_snp_ids(self) -> list[str]:
         # Filter out rows where the 'ID' column is '.' and collect the 'ID' column as a list
         snp_ids = self.lazyframe.filter(pl.col('ID') != '.').select('ID').collect()['ID'].to_list()
         return snp_ids
 
-    def get_individual_genotypes(self, individual_id: str) -> dict[VariantId, Genotype]:
+    def get_individual_genotypes(self, individual_id: str) -> dict[str, Genotype]:
         colnames: list[str] = self.lazyframe.collect_schema().names()
         # Check if the column exists in the schema before collecting
         if individual_id not in colnames:
@@ -23,8 +23,8 @@ class GenotypesFile:
 
         individual_df = self.lazyframe.select(['ID', individual_id]).filter(pl.col('ID') != '.').collect()
 
-        mapping_id_to_gt_str: dict[VariantId, str] = dict(zip(individual_df["ID"], individual_df[individual_id]))
+        mapping_id_to_gt_str: dict[str, str] = dict(zip(individual_df["ID"], individual_df[individual_id]))
 
-        mapping_id_to_gt: dict[VariantId, Genotype] = {k:Genotype(v) for k,v in mapping_id_to_gt_str.items()}
+        mapping_id_to_gt: dict[str, Genotype] = {k:Genotype(v) for k,v in mapping_id_to_gt_str.items()}
 
         return mapping_id_to_gt

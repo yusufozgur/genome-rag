@@ -2,15 +2,12 @@ from google import genai
 from google.genai import types
 from google.genai.chats import Chat
 from genome_rag.snpedia.VectorDB import VectorDB
-import os
-from dotenv import load_dotenv  # Add this import
-load_dotenv()  # Load environment variables from .env
-api_key = os.getenv("GOOGLE_API_KEY")
-
 class LLM:
 
     chat: Chat
     db: VectorDB
+    variant_ids: list[str]
+
     system_prompt = """<System>
         You are a helpful assistant helping people interpret their genotyping results.
         Your context will include snpedia articles that have been retrieved due to their relevance.
@@ -18,7 +15,7 @@ class LLM:
         Context is provided as json. Object ids are variant ids. Document is the text in the SNPedia page. Metadata contains technical information regarding the variant.
         </System>"""
 
-    def __init__(self, db: VectorDB):
+    def __init__(self, db: VectorDB, api_key, variant_ids: list[str]):
         client = genai.Client(
             api_key=api_key
         )
@@ -29,8 +26,10 @@ class LLM:
 
         self.db = db
 
+        self.variant_ids = variant_ids
+
     def _vector_search(self, query: str):
-        rag_close_vectors = self.db.query(query)
+        rag_close_vectors = self.db.query(query, ids = self.variant_ids)
         #manipulate response into a correct format
         context = {
             id: {
@@ -42,10 +41,10 @@ class LLM:
 
         return context
     
-    def _get_context_prompt(self, query: str):
+    def _get_context_prompt(self, context):
         return f"""
         <Context>
-        {str(self._vector_search(query))}
+        {str(context)}
         </Context>
         """
 
@@ -56,12 +55,14 @@ class LLM:
         User's question: {msg}
         </User>
         """
+
+        context = self._vector_search(msg)
         
         response = self.chat.send_message(
             msg,
             config=types.GenerateContentConfig(
-                system_instruction = f"{self.system_prompt}\n{self._get_context_prompt(msg)}",
+                system_instruction = f"{self.system_prompt}\n{self._get_context_prompt(context)}",
                 )
         )
         
-        return response.text
+        return response.text, context

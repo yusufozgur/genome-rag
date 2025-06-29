@@ -32,13 +32,13 @@ class SNPedia():
             key: str,
             template_index = 0) -> str:
 
-        template = wikicode.filter_templates()[template_index]
-
         try:
+            template = wikicode.filter_templates()[template_index]
+
             result = str(template.get(key))
             if key == "Summary" and result.startswith("Summary="):
                 result = result.removeprefix("Summary=")
-            return result
+            return result.strip()
         except:
             return ""
 
