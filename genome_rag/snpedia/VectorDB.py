@@ -1,5 +1,6 @@
 import chromadb
 from chromadb import Collection
+from chromadb import QueryResult
 from snpedia import SNPedia
 from tqdm import tqdm # Import tqdm
 
@@ -8,7 +9,9 @@ class VectorDB:
     """
     Acts as a vector storage for snpedia rsid variant pages.
     """
+    
     pages: Collection
+
     def __init__(self):
         chroma_client = chromadb.PersistentClient(path="data/chroma")
         self.pages = chroma_client.get_or_create_collection(name="snpedia")
@@ -24,7 +27,6 @@ class VectorDB:
             print(f"VectorDB: All required variants exist in DB.")
 
 
-
     def _add_new_pages_to_db(self, variant_ids: set[str]):
         wiki = SNPedia()
         # Wrap the loop with tqdm for a progress bar
@@ -35,3 +37,9 @@ class VectorDB:
                 documents=[page.content],
                 metadatas=[(page.metadata)] # type: ignore
             )
+
+    def query(self, query: str, top_n: int = 10) -> QueryResult:
+        return self.pages.query(
+            query_texts=[query],
+            n_results=top_n,
+        )
