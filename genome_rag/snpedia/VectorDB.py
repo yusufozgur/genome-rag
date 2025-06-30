@@ -20,6 +20,7 @@ class VectorDB:
         chroma_client = chromadb.PersistentClient(path="data/chroma")
         self.vectors = chroma_client.get_or_create_collection(name="snpedia")
 
+
     def add_snps_to_db_if_not_added(self, variant_ids: list[str]):
         """
         Get a list of variant ids. If those variant ids are not already added to db, add them.
@@ -31,6 +32,7 @@ class VectorDB:
 
         # Process variant_ids in slices due to computational constraints
         slice_size = 1000
+
         non_existent_ids = set()
         print(f"VectorDB: Checking for existing variants in batches of {slice_size}.")
 
@@ -106,10 +108,17 @@ class VectorDB:
         
         db.disconnect()
 
-    def query(self, query: str, top_n: int = 10, ids = None) -> QueryResult:
+    def query(self, query: str, variant_ids: list[str], top_n: int = 10, ) -> QueryResult:
+
+        #filter variant ids by those in the db, so we dont get too many sql objects error
+
+
+        existing_vars = set(self.vectors.get(include=[])["ids"])
+        common = set(variant_ids).intersection(existing_vars)
+        variant_ids_common = list(common)
+
         return self.vectors.query(
             query_texts=[query],
             n_results=top_n,
-            ids = ids,
-            where_document={"$contains" : "a"} # this is used to filter out empty documents
+            ids = variant_ids_common
         )

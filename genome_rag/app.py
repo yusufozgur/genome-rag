@@ -11,7 +11,7 @@ from genome_rag.genotypes.GenotypesFile import GenotypesFile
 
 with st.sidebar:
     gemini_api_key = st.text_input("gemini API Key", value=api_key, key="file_qa_api_key", type="password")
-    file_path = st.text_input("Enter the path to your vcf file.", value="data/sample_8k.tsv")
+    file_path = st.text_input("Enter the path to your vcf file.", value="data/sample_big.tsv")
 
     sample_name = st.text_input("Enter sample name", value="NA00003.GT")
 

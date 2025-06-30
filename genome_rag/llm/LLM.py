@@ -36,7 +36,7 @@ class LLM:
         self.user_genotypes = user_genotypes
 
     def _vector_search(self, query: str):
-        rag_close_vectors = self.db.query(query, ids = self.variant_ids, top_n=self.top_n)
+        rag_close_vectors = self.db.query(query, variant_ids= self.variant_ids, top_n=self.top_n)
         #manipulate response into a correct format
         context = {
             id: {
