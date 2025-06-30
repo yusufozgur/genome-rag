@@ -18,6 +18,7 @@ class LLM:
         Context is provided as json. Object ids are variant ids. Document is the text in the SNPedia page. Metadata contains technical information regarding the variant.
         If applicable, you can start by summarizing which articles were retrieved due to user's query, then answer the user.
         While talking about articles in snpedia, give links in the format of "https://www.snpedia.com/index.php/<rsid>"
+        If the genome orientation of a variant's alleles is minus, you would have to flip the alleles in order to compare with user's genotype.
         </System>"""
 
     def __init__(self, db: VectorDB, api_key, variant_ids: list[str], user_genotypes: dict[str, Genotype], top_n: int):
@@ -73,4 +74,4 @@ class LLM:
                 )
         )
         
-        return response.text, context
+        return response.text, rag_close_vectors 

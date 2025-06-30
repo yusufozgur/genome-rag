@@ -11,15 +11,11 @@ from genome_rag.genotypes.GenotypesFile import GenotypesFile
 
 with st.sidebar:
     gemini_api_key = st.text_input("gemini API Key", value=api_key, key="file_qa_api_key", type="password")
+    file_path = st.text_input("Enter the path to your vcf file.", value="data/sample_8k.tsv")
+
+    sample_name = st.text_input("Enter sample name", value="NA00003.GT")
 
 st.title("🧬 Communicate with your genome.")
-
-# Replace st.file_uploader with st.text_input
-# uploaded_file = st.file_uploader("Upload a vcf file.", type=("vcf", ".vcf.gz"))
-file_path = st.text_input("Enter the path to your vcf file.", value="data/sample_8k.tsv")
-
-sample_name = st.text_input("Enter sample name", value="NA00003.GT")
-
 
 # Check if the provided file path exists
 file_exists = os.path.exists(file_path)
@@ -55,12 +51,14 @@ if file_exists and question and gemini_api_key:
     with st.spinner("Processing db...", show_time=True):
         gt = GenotypesFile(file_path)
         snps = gt.get_snp_ids()
-        db.add_snps_to_db_if_not_added(snps)
+        #dont add snps here as I decided adding all in snpedia would be a much better idea
+        #db.add_snps_to_db_if_not_added(snps)
         gts = gt.get_individual_genotypes(sample_name)
     llm = LLM(db, gemini_api_key, snps, gts, top_n_results)
     with st.spinner("Processing...", show_time=True):
         response, context = llm.send_message(question)
-        st.write(context)
+        with st.expander("Context", expanded=False):
+            st.write(context)
         st.write(response)
     #st.write("### Answer")
 #    st.write(response.completion)
