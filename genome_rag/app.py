@@ -3,7 +3,7 @@ import streamlit as st
 import os
 from dotenv import load_dotenv  # Add this import
 load_dotenv()  # Load environment variables from .env
-api_key = os.getenv("GOOGLE_API_KEY")
+gemini_api_key = os.getenv("GOOGLE_API_KEY")
 
 from genome_rag.snpedia.VectorDB import VectorDB
 from genome_rag.llm.LLM import LLM
@@ -12,7 +12,8 @@ from genome_rag.genotypes.GenotypesFile import GenotypesFile
 st.title("🧬 Communicate with your genome.")
 
 with st.sidebar:
-    gemini_api_key = st.text_input("gemini API Key", value=api_key, key="file_qa_api_key", type="password")
+    if not gemini_api_key:
+        gemini_api_key = st.text_input("gemini API Key", key="file_qa_api_key", type="password")
     file_path = st.text_input("Enter the path to your vcf file.", value="data/sample_big.tsv")
 
     sample_name = st.text_input("Enter sample name", value="NA00003.GT")
