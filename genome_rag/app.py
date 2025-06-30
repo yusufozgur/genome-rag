@@ -60,8 +60,8 @@ if prompt := st.chat_input(placeholder="Ask something about your genome"):
         llm = LLM(db, gemini_api_key, snps, gts, choose_top_n_results)
         with st.spinner("Thinking...", show_time=True):
             response, context = llm.send_message(prompt)
-            #with st.expander("Context", expanded=False):
-            #    st.write(context)
+            with st.expander("Context", expanded=False):
+                st.write(context)
         st.session_state.messages.append({"role": "assistant", "content": response})
         st.write(response)
 
