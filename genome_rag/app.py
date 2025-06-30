@@ -9,22 +9,23 @@ from genome_rag.snpedia.VectorDB import VectorDB
 from genome_rag.llm.LLM import LLM
 from genome_rag.genotypes.GenotypesFile import GenotypesFile
 
+st.title("🧬 Communicate with your genome.")
+
 with st.sidebar:
     gemini_api_key = st.text_input("gemini API Key", value=api_key, key="file_qa_api_key", type="password")
     file_path = st.text_input("Enter the path to your vcf file.", value="data/sample_big.tsv")
 
     sample_name = st.text_input("Enter sample name", value="NA00003.GT")
 
-st.title("🧬 Communicate with your genome.")
-
 # Check if the provided file path exists
 file_exists = os.path.exists(file_path)
 
 if not file_exists and file_path:
     st.error(f"Error: File not found at path: {file_path}")
+    st.stop()
 
 # Add a number input for top_n results
-top_n_results = st.number_input(
+choose_top_n_results = st.number_input(
     "Number of top results to consider",
     min_value=1,
     value=10,
@@ -32,34 +33,37 @@ top_n_results = st.number_input(
     disabled=not file_exists or not file_path,
 )
 
-
-question = st.text_input(
-    "Ask something about your genome",
-    placeholder="Can you give me a short summary?",
-    # Disable if file doesn't exist or path is empty
-    disabled=not file_exists or not file_path,
-)
-
-
 # Update conditions to use file_exists instead of uploaded_file
 if not gemini_api_key:
-     st.info("Please add your gemini API key to continue.")
+     st.error("Please add your gemini API key to continue.")
+     st.stop()
 
-# Update conditions to use file_exists instead of uploaded_file
-if file_exists and question and gemini_api_key:
-    db = VectorDB()
-    with st.spinner("Processing db...", show_time=True):
-        gt = GenotypesFile(file_path)
-        snps = gt.get_snp_ids()
-        #dont add snps here as I decided adding all in snpedia would be a much better idea
-        #db.add_snps_to_db_if_not_added(snps)
-        gts = gt.get_individual_genotypes(sample_name)
-    llm = LLM(db, gemini_api_key, snps, gts, top_n_results)
-    with st.spinner("Processing...", show_time=True):
-        response, context = llm.send_message(question)
-        with st.expander("Context", expanded=False):
-            st.write(context)
+db = VectorDB()
+
+if "messages" not in st.session_state:
+    st.session_state["messages"] = [
+        {"role": "assistant", "content": "Hi, I'm a chatbot who can search the web. How can I help you?"}
+    ]
+
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["content"])
+
+if prompt := st.chat_input(placeholder="Ask something about your genome"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.chat_message("user").write(prompt)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Processing db...", show_time=True):
+            gt = GenotypesFile(file_path)
+            snps = gt.get_snp_ids()
+            gts = gt.get_individual_genotypes(sample_name)
+        llm = LLM(db, gemini_api_key, snps, gts, choose_top_n_results)
+        with st.spinner("Thinking...", show_time=True):
+            response, context = llm.send_message(prompt)
+            #with st.expander("Context", expanded=False):
+            #    st.write(context)
+        st.session_state.messages.append({"role": "assistant", "content": response})
         st.write(response)
-    #st.write("### Answer")
-#    st.write(response.completion)
-    pass
+
+
+
