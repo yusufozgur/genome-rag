@@ -2,7 +2,7 @@ from typing import Sequence
 import chromadb
 from chromadb import Collection
 from chromadb import QueryResult
-from genome_rag.snpedia.snpedia import SNPedia
+from genome_rag.snpedia.snpedia import Metadata, SNPedia
 from tqdm import tqdm # Import tqdm
 from genome_rag.genotypes.Genotype import VariantId
 
@@ -68,43 +68,63 @@ class VectorDB:
         db = Prisma()
         db.connect()
 
-        for i in tqdm(range(0, len(variant_ids)), desc="Adding new SNPedia pages"):
-            id = variant_ids[i]
-            # Fetch and add pages for the current id
-            page = wiki.get_page_text(id)
-            print(id)
+        slice_size = 2
+        for i in tqdm(range(0, len(variant_ids), slice_size), desc="Adding new SNPedia pages to db"):
+            
+            var_ids_current_slice = variant_ids[i:i + slice_size]
+            
+            pages_slice = []
+            embedding_pages = []
+            embedding_pages_ids = []
+            for id in tqdm(var_ids_current_slice, desc="Fetching SNPedia pages"):
+                page = wiki.get_page_text(id)
+                pages_slice.append(page)
+                if page.text != "":  # Only add non-empty pages
+                    embedding_pages.append(page)
+                    embedding_pages_ids.append(id)
 
             # We dont need to add full text and text of page to vectordb
             # metadata, as it will be used in model context construction
             # instead we will keep it in our sqlite db for future reference.
-            vectorbd_metadata = page.metadata.copy()
-            vectorbd_metadata.pop("text", None)
-            vectorbd_metadata.pop("raw_content", None)
-
-            if page.text != "":
-                self.vectors.add(
-                    ids=[id],
-                    documents=[page.text], # Use page.text
-                    metadatas=[vectorbd_metadata] # type: ignore
-                )
+            def remove_text_and_raw_content_from_metadata(metadata: Metadata):
+                metadata.pop("text", None)
+                metadata.pop("raw_content", None)
+                return metadata
             
-            db.snpediapage.create(
-                data={
-                    "variant_id": id,
-                    "summary": page.metadata.get("Summary", ""), # Use .get for safety
-                    "assembly": page.metadata.get("Assembly", ""),
-                    "orientation": page.metadata.get("Orientation", ""),
-                    "stabilizedOrientation": page.metadata.get("StabilizedOrientation", ""),
-                    "geno1": page.metadata.get("geno1", ""),
-                    "geno1_summary": page.metadata.get("geno1_summary", ""), # Add new field
-                    "geno2": page.metadata.get("geno2", ""),
-                    "geno2_summary": page.metadata.get("geno2_summary", ""), # Add new field
-                    "geno3": page.metadata.get("geno3", ""),
-                    "geno3_summary": page.metadata.get("geno3_summary", ""), # Add new field
-                    "text": page.text, # Use page.text for the text field
-                    "raw_content": page.metadata.get("raw_content", ""), # Add new field
-                }
-            )
+            vectorbd_metadatas = [remove_text_and_raw_content_from_metadata(page.metadata.copy()) for page in embedding_pages]
+
+            embedding_pages_texts = [page.text for page in embedding_pages]
+
+            #only add if current slice has any valid embedding worthy pages
+            if embedding_pages_ids:
+                self.vectors.add(
+                    ids=embedding_pages_ids,
+                    documents=embedding_pages_texts, # Use page.text
+                    metadatas=vectorbd_metadatas # type: ignore
+                )
+
+            #all pages will be added to the db
+            
+            db.snpediapage.create_many(
+                data=[
+                    {
+                        "variant_id": id,
+                        "summary": page.metadata.get("Summary", ""), # Use .get for safety
+                        "assembly": page.metadata.get("Assembly", ""),
+                        "orientation": page.metadata.get("Orientation", ""),
+                        "stabilizedOrientation": page.metadata.get("StabilizedOrientation", ""),
+                        "geno1": page.metadata.get("geno1", ""),
+                        "geno1_summary": page.metadata.get("geno1_summary", ""), # Add new field
+                        "geno2": page.metadata.get("geno2", ""),
+                        "geno2_summary": page.metadata.get("geno2_summary", ""), # Add new field
+                        "geno3": page.metadata.get("geno3", ""),
+                        "geno3_summary": page.metadata.get("geno3_summary", ""), # Add new field
+                        "text": page.text, # Use page.text for the text field
+                        "raw_content": page.metadata.get("raw_content", ""), # Add new field
+                    }
+                    for id, page in zip(var_ids_current_slice, pages_slice)
+                ] # type: ignore
+            ) 
         
         db.disconnect()
 
